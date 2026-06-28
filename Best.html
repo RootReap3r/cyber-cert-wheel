@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security Certification Roadmap</title>
+<style>
+:root{--bg:#0a0c12;--surface:#13151f;--border:#2a2d3d;--text:#f0f2ff;--muted:#8892b0;--accent:#818cf8;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:"Segoe UI",system-ui,sans-serif;
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:18px 12px;}
+h1{font-size:1.3rem;font-weight:700;letter-spacing:.05em;margin-bottom:2px;color:#e8eeff;}
+.tagline{font-size:.68rem;color:var(--muted);margin-bottom:12px;text-align:center;}
+
+.tabs{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:10px;}
+.tab{padding:7px 15px;font-size:.68rem;font-weight:700;letter-spacing:.04em;cursor:pointer;border:none;
+  background:transparent;color:var(--muted);transition:all .2s;white-space:nowrap;}
+.tab+.tab{border-left:1px solid var(--border);}
+.tab.active{background:var(--accent);color:#fff;}
+
+.legend-bar{display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:center;margin-bottom:10px;
+  font-size:.62rem;color:#c0c8e8;min-height:14px;}
+.legend-bar span{display:flex;align-items:center;gap:4px;}
+.sw{display:inline-block;width:18px;height:3px;border-radius:2px;flex-shrink:0;}
+
+.domain-filters{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-bottom:10px;max-width:960px;}
+.dfbtn{background:var(--surface);border:1px solid var(--border);color:#a0aac8;border-radius:4px;
+  padding:3px 9px;font-size:.64rem;font-weight:600;cursor:pointer;transition:all .15s;}
+.dfbtn:hover,.dfbtn.active{border-color:var(--accent);color:#fff;}
+.dfbtn.active{background:#1e2040;}
+
+#wheel-wrap{position:relative;width:min(880px,96vw);aspect-ratio:1;}
+svg#wheel{width:100%;height:100%;overflow:visible;}
+
+#bar-wrap{width:min(840px,96vw);display:none;}
+.bar-scale{display:flex;flex-wrap:wrap;gap:5px 14px;justify-content:center;margin-bottom:12px;
+  padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;}
+.bar-scale-item{display:flex;align-items:center;gap:7px;font-size:.61rem;color:#c0c8e8;}
+.bar-circle{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:.7rem;color:#fff;flex-shrink:0;}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;cursor:pointer;}
+.bar-row:hover .bar-fill{filter:brightness(1.2);}
+.bar-label{font-size:.71rem;font-weight:700;width:120px;flex-shrink:0;text-align:right;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bar-track{flex:1;background:#1a1d2e;border-radius:3px;height:20px;position:relative;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;transition:width .5s ease;}
+.bar-score{position:absolute;right:7px;top:50%;transform:translateY(-50%);
+  font-size:.65rem;font-weight:800;color:#fff;}
+.bar-tags{display:flex;gap:3px;flex-shrink:0;flex-wrap:wrap;max-width:140px;}
+.bar-tag{font-size:.5rem;padding:1px 4px;border-radius:2px;font-weight:700;white-space:nowrap;}
+
+#scatter-wrap{width:min(840px,96vw);display:none;flex-direction:column;align-items:center;}
+.scatter-legend{display:flex;gap:6px 14px;flex-wrap:wrap;justify-content:center;
+  margin-bottom:8px;font-size:.62rem;color:#c0c8e8;}
+.scatter-legend span{display:flex;align-items:center;gap:5px;}
+.sdot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0;}
+
+#tooltip{position:fixed;background:#1a1d2e;border:1px solid #3a3d54;border-radius:7px;
+  padding:9px 13px;font-size:.69rem;line-height:1.55;pointer-events:none;opacity:0;
+  transition:opacity .1s;z-index:9999;max-width:300px;}
+#tooltip.vis{opacity:1;}
+.tt-ctx{font-size:.59rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.tt-name{font-weight:800;color:#fff;margin-top:2px;font-size:.82rem;}
+.tt-sub{color:#b0bcdc;font-size:.65rem;margin-top:1px;}
+.tt-cost{color:#818cf8;font-size:.65rem;margin-top:3px;}
+.tt-scores{margin-top:5px;display:grid;grid-template-columns:auto 1fr;gap:2px 8px;font-size:.63rem;}
+.tt-sl{color:var(--muted);}
+.tt-sv{display:flex;align-items:center;gap:3px;}
+.pip{width:7px;height:7px;border-radius:50%;display:inline-block;}
+.tt-verdict{margin-top:5px;font-size:.63rem;color:#d0d8f8;line-height:1.5;
+  border-top:1px solid #252840;padding-top:5px;}
+
+#cert-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9998;
+  opacity:0;pointer-events:none;transition:opacity .18s;}
+#cert-overlay.vis{opacity:1;pointer-events:all;}
+#cert-card{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.93);
+  background:#13151f;border:1px solid #3a3f5c;border-radius:10px;padding:20px 22px;
+  z-index:9999;max-width:320px;width:90vw;opacity:0;pointer-events:none;
+  transition:opacity .18s,transform .18s;}
+#cert-card.vis{opacity:1;pointer-events:all;transform:translate(-50%,-50%) scale(1);}
+#cert-card .cc-ctx{font-size:.59rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;}
+#cert-card .cc-name{font-size:1.05rem;font-weight:800;margin:4px 0 2px;}
+#cert-card .cc-badge{display:inline-block;font-size:.54rem;font-weight:700;padding:2px 6px;
+  border-radius:3px;background:#ff4466;color:#fff;margin-left:5px;vertical-align:middle;}
+#cert-card .cc-full{font-size:.68rem;color:#a8b4d0;margin-bottom:6px;}
+#cert-card .cc-cost{font-size:.73rem;font-weight:700;color:#818cf8;margin-bottom:10px;}
+#cert-card .cc-scores{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;
+  font-size:.64rem;margin-bottom:10px;}
+#cert-card .cc-sl{color:var(--muted);}
+#cert-card .cc-sv{display:flex;align-items:center;gap:3px;}
+#cert-card .cc-verdict{font-size:.65rem;color:#c8d4f0;line-height:1.55;
+  border-top:1px solid #252840;padding-top:9px;margin-bottom:14px;}
+#cert-card .cc-actions{display:flex;gap:8px;}
+#cert-card .cc-visit{flex:1;padding:8px;background:#818cf8;color:#fff;border:none;
+  border-radius:6px;font-size:.71rem;font-weight:700;cursor:pointer;transition:background .15s;}
+#cert-card .cc-visit:hover{background:#6366f1;}
+#cert-card .cc-close{padding:8px 14px;background:transparent;color:var(--muted);
+  border:1px solid #2a2d3d;border-radius:6px;font-size:.71rem;font-weight:700;
+  cursor:pointer;transition:all .15s;}
+#cert-card .cc-close:hover{border-color:#818cf8;color:#fff;}
+
+.footnote{font-size:.62rem;color:var(--muted);margin-top:12px;text-align:center;
+  max-width:740px;line-height:1.65;}
+</style>
+</head>
+<body>
+<h1>Security Certification Roadmap</h1>
+<p class="tagline">Third-party · vendor-neutral only · no vendor-specific certs · center = rarest · outer = foundational · ⚔ = offensive</p>
+
+<div class="tabs">
+  <button class="tab active" data-tab="certs">⬡ Certifications</button>
+  <button class="tab" data-tab="training">▬ Training Quality</button>
+  <button class="tab" data-tab="scatter">◎ HR vs Community</button>
+</div>
+
+<div class="legend-bar" id="legend-bar"></div>
+
+<div class="domain-filters" id="domain-filters">
+  <button class="dfbtn active" data-domain="all">All</button>
+  <button class="dfbtn" data-domain="net">Network & Hacking</button>
+  <button class="dfbtn" data-domain="web">Web Security & Hacking</button>
+  <button class="dfbtn" data-domain="ai">AI Security / Hacking</button>
+  <button class="dfbtn" data-domain="eng">Engineering / Exploit Dev</button>
+  <button class="dfbtn" data-domain="gov">Governance & Risk</button>
+  <button class="dfbtn" data-domain="audit">Audit & Compliance</button>
+  <button class="dfbtn" data-domain="ops">Blue Team / SOC</button>
+</div>
+
+<div id="wheel-wrap"><svg id="wheel" viewBox="-500 -500 1000 1000"></svg></div>
+<div id="bar-wrap"></div>
+<div id="scatter-wrap">
+  <div class="scatter-legend" id="scatter-legend"></div>
+  <svg id="scatter" viewBox="0 0 580 470" style="width:min(580px,96vw);height:auto;overflow:visible;"></svg>
+</div>
+
+<div id="cert-overlay"></div>
+<div id="cert-card">
+  <div class="cc-ctx" id="cc-ctx"></div>
+  <div class="cc-name" id="cc-name"></div>
+  <div class="cc-full" id="cc-full"></div>
+  <div class="cc-cost" id="cc-cost"></div>
+  <div class="cc-scores" id="cc-scores"></div>
+  <div class="cc-verdict" id="cc-verdict"></div>
+  <div class="cc-actions">
+    <button class="cc-visit" id="cc-visit">Visit Site &#8594;</button>
+    <button class="cc-close" id="cc-close">&#10005; Close</button>
+  </div>
+</div>
+<div id="tooltip"></div>
+<p class="footnote" id="footnote">Third-party, vendor-neutral certifications only. Vendor-specific certs (AWS, Azure, GCP, etc.) are intentionally excluded.</p>
+
+<script>
+// ── DOMAINS ──────────────────────────────────────────────────────────────────
+const DOMAINS=[
+  {key:'net',  label:'Network\n& Hacking',          short:'Net & Hack',    color:'#f97316'},
+  {key:'web',  label:'Web Security\n& Hacking',     short:'Web & Hack',    color:'#ef4444'},
+  {key:'ai',   label:'AI Security\n/ Hacking',      short:'AI Security',   color:'#a855f7'},
+  {key:'eng',  label:'Engineering\n/ Exploit Dev',  short:'Eng/Exploit',   color:'#e879f9'},
+  {key:'gov',  label:'Governance\n& Risk',          short:'Gov & Risk',    color:'#7c3aed'},
+  {key:'audit',label:'Audit &\nCompliance',         short:'Audit',         color:'#6366f1'},
+  {key:'ops',  label:'Blue Team\n/ SOC',            short:'Blue Team',     color:'#3b82f6'},
+];
+
+// ── TIERS ────────────────────────────────────────────────────────────────────
+const TIERS=[
+  {level:1,name:'Foundational',desc:'Conceptual knowledge only. You understand the concepts but have not necessarily done the work hands-on.',           color:'#94a3b8',years:'0-2 yrs'},
+  {level:2,name:'Practical',   desc:'You have knowledge AND can execute tasks effectively in a real environment. You can do a decent amount of work independently.',             color:'#34d399',years:'2-4 yrs · Associate\'s Degree'},
+  {level:3,name:'Professional',desc:'Fully independent operator. You can work entirely on your own with little to no outside insight. You own the outcome.',             color:'#60a5fa',years:'4-10 yrs · Bachelor\'s Degree'},
+  {level:4,name:'Expert',      desc:'You can help others, work complex problems, AND teach/mentor others. You elevate the whole team.',       color:'#f59e0b',years:'10-20 yrs · Master\'s Degree'},
+  {level:5,name:'God Tier',    desc:'Beyond everybody else\'s level. You operate at a level that few can even comprehend. Fewer than a few hundred holders worldwide.',        color:'#f43f5e',years:'20+ yrs · PhD'},
+];
+
+// ── CERTS ─────────────────────────────────────────────────────────────────────
+const CERTS=[
+  // NETWORK SECURITY & HACKING
+  {id:'n18b',name:'GSE',       full:'GIAC Security Expert (portfolio)',         cost:'~$7,475',domain:'net',level:5,url:'https://www.giac.org',
+   sent:{t:5,e:5,c:5},verdict:'Elite GIAC portfolio requiring ~10 certs plus lab exam. Tiny holder count. Maximum signal in any domain.',red:false},
+  {id:'n14',name:'GXPN',       full:'GIAC Exploit Researcher & Adv Pentest',   cost:'$979',  domain:'net',level:4,url:'https://www.giac.org/certifications/exploit-researcher-advanced-penetration-tester-gxpn',
+   sent:{t:5,e:4,c:5},verdict:'Low-level exploitation. Small, highly skilled holder community.',red:true},
+  {id:'n15',name:'OSEP',       full:'OffSec Experienced Penetration Tester',   cost:'$1,499',domain:'net',level:4,url:'https://www.offsec.com/courses/pen-300/',
+   sent:{t:4,e:5,c:4},verdict:'AV evasion + AD + C2 chains. OffSec expert-tier network offensive.',red:true},
+  {id:'n9', name:'HTB CAPE',   full:'HTB Certified Active Directory Pentesting Expert',cost:'~$490',domain:'net',level:4,url:'https://academy.hackthebox.com/preview/certifications/htb-certified-active-directory-pentesting-expert',
+   sent:{t:5,e:4,c:5},verdict:'HTB expert-tier AD pentesting. Advanced AD attack chains, privilege escalation, lateral movement. Lab-based.',red:true},
+  {id:'n5', name:'PNPT',       full:'TCM Practical Network Penetration Tester', cost:'$299',  domain:'net',level:3,url:'https://certifications.tcm-sec.com/pnpt/',
+   sent:{t:5,e:4,c:5},verdict:'Community top pick for practical network pentesting. Report-based exam.',red:true},
+  {id:'n6', name:'eCPPT',      full:'INE Certified Professional Penetration Tester',cost:'$400',domain:'net',level:3,url:'https://ine.com/security/certifications/ecppt-certification',
+   sent:{t:4,e:3,c:4},verdict:'Solid intermediate network pentest cert. Lab-based. Community trusted.',red:true},
+  {id:'n8', name:'HTB CPTS',    full:'HTB Certified Penetration Testing Specialist',cost:'$410',domain:'net',level:3,url:'https://academy.hackthebox.com/preview/certifications/htb-certified-penetration-testing-specialist',
+   sent:{t:5,e:4,c:5},verdict:'HTB quality + AD labs. Community rates very high.',red:true},
+  {id:'n10',name:'OSCP',        full:'OffSec Certified Professional',            cost:'$1,499',domain:'net',level:3,url:'https://www.offsec.com/courses/pen-200/',
+   sent:{t:3,e:5,c:4},verdict:'The network pentest benchmark. 24-hr lab exam. Required by most hiring teams.',red:true},
+  {id:'n3', name:'eJPT',       full:'INE Junior Penetration Tester',            cost:'$249',  domain:'net',level:2,url:'https://ine.com/security/certifications/ejpt-certification',
+   sent:{t:4,e:3,c:4},verdict:'Community favorite first pentest cert. Good labs.',red:true},
+  {id:'n5b',name:'PJPT',       full:'TCM Practical Junior Penetration Tester',  cost:'~$30',  domain:'net',level:2,url:'https://certifications.tcm-sec.com/pjpt/',
+   sent:{t:5,e:2,c:4},verdict:'TCM entry-level pentest cert. Affordable and practical. Great first offensive cert.',red:true},
+  {id:'n7', name:'GPEN',       full:'GIAC Certified Penetration Tester',        cost:'$979',  domain:'net',level:2,url:'https://www.giac.org/certifications/penetration-tester-gpen',
+   sent:{t:4,e:4,c:4},verdict:'Solid pentest cert. GIAC brand respected by hiring.',red:true},
+  {id:'n2', name:'CCNA',       full:'Cisco Certified Network Associate',        cost:'$330',  domain:'net',level:2,url:'https://www.cisco.com/c/en/us/training-events/training-certifications/certifications/associate/ccna.html',
+   sent:{t:4,e:4,c:3},verdict:'Cisco brand networking standard. Solid fundamentals, vendor-specific but widely recognized.',red:false},
+  {id:'n3c',name:'GCLD',       full:'GIAC Cloud Security Essentials',           cost:'$979',  domain:'net',level:2,url:'https://www.giac.org/certifications/cloud-security-essentials-gcld',
+   sent:{t:4,e:4,c:4},verdict:'GIAC entry cloud security. Good foundational cert for cloud network security roles.',red:false},
+  {id:'n4', name:'CEH',        full:'EC-Council Certified Ethical Hacker',      cost:'$1,199',domain:'net',level:1,url:'https://www.eccouncil.org/programs/certified-ethical-hacker-ceh/',
+   sent:{t:2,e:4,c:1},verdict:'HR demands it; technical community hates it. MCQ only. Foundational at best.',red:true},
+  {id:'n4b',name:'Pentest+',   full:'CompTIA PenTest+',                         cost:'$404',  domain:'net',level:1,url:'https://www.comptia.org/en-us/certifications/pentest/',
+   sent:{t:2,e:3,c:1},verdict:'CompTIA brand. Community dismisses it vs OSCP or PNPT. MCQ-based.',red:true},
+
+  // WEB SECURITY & HACKING
+  {id:'w10',name:'HTB CWEE',  full:'HTB Certified Web Exploitation Expert',    cost:'$1,260',domain:'web',level:5,url:'https://academy.hackthebox.com/preview/certifications/htb-certified-web-exploitation-expert',
+   sent:{t:5,e:4,c:5},verdict:'HTB expert web tier. Source code audit + complex exploit chains.',red:true},
+  {id:'w8', name:'OSWE',      full:'OffSec Web Expert',                        cost:'$1,649',domain:'web',level:4,url:'https://www.offsec.com/courses/web-300/',
+   sent:{t:4,e:5,c:4},verdict:'Source-code review + web exploit chains. OffSec expert-tier web cert.',red:true},
+  {id:'w7', name:'eWPTX',     full:'INE Web App Penetration Tester eXtreme',   cost:'$400',  domain:'web',level:4,url:'https://ine.com/security/certifications/ewptx-certification',
+   sent:{t:4,e:3,c:4},verdict:'Advanced offensive web exploitation. Lab-based. Good OSWE alternative.',red:true},
+  {id:'w9', name:'PWPE',      full:'TCM Practical Web Penetration Expert',     cost:'~$350', domain:'web',level:4,url:'https://certifications.tcm-sec.com/pwpe/',
+   sent:{t:5,e:3,c:5},verdict:'Fewer than 100 holders. Entirely practical. TCM expert-tier web cert.',red:true},
+  {id:'w5', name:'BSCP',      full:'Burp Suite Certified Practitioner',        cost:'$99',   domain:'web',level:3,url:'https://portswigger.net/web-security/certification',
+   sent:{t:5,e:4,c:5},verdict:'PortSwigger Web Academy behind it. Hard exam. Best value in web security.',red:true},
+  {id:'w5b',name:'PWPP',      full:'TCM Practical Web Pentest Professional',   cost:'$499',  domain:'web',level:3,url:'https://certifications.tcm-sec.com/pwpp',
+   sent:{t:5,e:3,c:5},verdict:'TCM professional-tier web cert. 3-day exam + 2-day report. NoSQL, SSRF, race conditions, template injection. Formerly PWPT.',red:true},
+  {id:'w6', name:'GWAPT',     full:'GIAC Web Application Penetration Tester',  cost:'$979',  domain:'web',level:3,url:'https://www.giac.org/certifications/web-application-penetration-tester-gwapt',
+   sent:{t:4,e:4,c:4},verdict:'Strong offensive web cert. Respected in AppSec pentest roles.',red:true},
+  {id:'w1', name:'GWEB',      full:'GIAC Certified Web Application Defender',  cost:'$979',  domain:'web',level:3,url:'https://www.giac.org/certifications/web-application-defender-gweb',
+   sent:{t:4,e:4,c:4},verdict:'Strong defensive web application security cert.',red:false},
+  {id:'w3', name:'HTB CBBH',  full:'HTB Certified Bug Bounty Hunter',          cost:'$355',  domain:'web',level:2,url:'https://academy.hackthebox.com/preview/certifications/htb-certified-bug-bounty-hunter',
+   sent:{t:5,e:4,c:5},verdict:'Web exploitation labs. HTB quality is top tier. Great entry web cert.',red:true},
+  {id:'w3b',name:'PWPA',      full:'TCM Practical Web Pentest Associate',      cost:'~$300', domain:'web',level:2,url:'https://certifications.tcm-sec.com/pwpa',
+   sent:{t:5,e:3,c:5},verdict:'TCM entry web pentesting cert. 2-day exam + 2-day report. 100% practical. No MCQ.',red:true},
+  {id:'w4', name:'eWPT',      full:'INE Web Application Penetration Tester',   cost:'$400',  domain:'web',level:2,url:'https://ine.com/security/certifications/ewpt-certification',
+   sent:{t:4,e:3,c:4},verdict:'Good entry web pentesting cert from INE. Lab-based.',red:true},
+  {id:'w4b',name:'SOG CAPen', full:'SecOps Group Certified AppSec Pentester',  cost:'$500',  domain:'web',level:2,url:'https://secops.group/certifications/',
+   sent:{t:3,e:2,c:3},verdict:'Practical web pentesting cert. SOG gaining community traction. Affordable.',red:true},
+  {id:'w4c',name:'CASE',      full:'EC-Council Certified Application Security Engineer',cost:'$550',domain:'web',level:2,url:'https://www.eccouncil.org/programs/certified-application-security-engineer-case/',
+   sent:{t:3,e:3,c:2},verdict:'EC-Council AppSec cert. Decent content, EC-Council brand inconsistency drags it down.',red:false},
+  {id:'w0a',name:'OWASP Top10', full:'OWASP Top 10 Web Security Awareness',    cost:'Free',  domain:'web',level:1,url:'https://owasp.org/www-project-top-ten',
+   sent:{t:4,e:3,c:5},verdict:'The universal starting point for web security. Not a cert per se but the foundational reference. Community essential.',red:false},
+  {id:'w0b',name:'PSW Fnd',    full:'PortSwigger Web Security Academy Completion',cost:'Free',domain:'web',level:1,url:'https://portswigger.net/web-security',
+   sent:{t:5,e:2,c:5},verdict:'Free world-class web app security training. Community consensus: do this before any paid course.',red:false},
+  {id:'w0c',name:'SOG CAP',    full:'SecOps Group Certified AppSec Practitioner',cost:'$249', domain:'web',level:1,url:'https://secops.group/certifications/',
+   sent:{t:3,e:2,c:3},verdict:'Affordable AppSec awareness cert. Entry-level foundational credential from SecOps Group.',red:false},
+  {id:'w0d',name:'MASE',       full:'Mosse Institute Application Security Engineer',cost:'$450',domain:'web',level:1,url:'https://mosse-institute.com/certifications/',
+   sent:{t:3,e:2,c:3},verdict:'Mosse practical AppSec entry cert. Low employer recognition but good hands-on intro.',red:false},
+  {id:'w0e',name:'CSST',       full:'GAQM Certified Software Security Tester',  cost:'$170',  domain:'web',level:1,url:'https://gaqm.org/certifications/',
+   sent:{t:2,e:1,c:1},verdict:'GAQM brand is very weak. Avoid unless absolutely necessary for a checkbox.',red:false},
+  {id:'w0f',name:'CSWAE',      full:'Mile2 Certified Secure Web App Engineer',  cost:'$550',  domain:'web',level:1,url:'https://mile2.com/certifications/',
+   sent:{t:2,e:2,c:1},verdict:'Mile2 brand has limited recognition. Foundational awareness level only.',red:false},
+
+  // AI SECURITY / HACKING
+  {id:'a7', name:'HTB COAE',   full:'HTB Certified Offensive AI Expert',        cost:'~$490', domain:'ai', level:5,url:'https://academy.hackthebox.com/preview/certifications/htb-certified-offensive-ai-expert',
+   sent:{t:5,e:4,c:5},verdict:'Launched April 2026. 7-day practical. Co-developed with Google. Adversarial ML, LLM exploitation, data poisoning.',red:true},
+  {id:'a6a',name:'ISO 42001 LA',full:'PECB ISO/IEC 42001 Lead Auditor',        cost:'~$930', domain:'ai',level:4,url:'https://pecb.com/en/education-and-certification-for-individuals/iso-iec-42001/iso-iec-42001-lead-auditor',
+   sent:{t:4,e:4,c:3},verdict:'AI management systems lead auditor. Expert-tier AI governance credential. EU AI Act demand rising.',red:false},
+  {id:'a5', name:'OSAI+',      full:'OffSec AI Security Professional',          cost:'~$1,499',domain:'ai',level:4,url:'https://www.offsec.com/courses/ai-300/',
+   sent:{t:5,e:4,c:5},verdict:'Offensive ML — prompt injection, model theft, MCP attacks. Cutting edge.',red:true},
+  {id:'a4a',name:'ISO 42001 LI',full:'PECB ISO/IEC 42001 Lead Implementer',    cost:'~$930', domain:'ai',level:3,url:'https://pecb.com/en/education-and-certification-for-individuals/iso-iec-42001/iso-iec-42001-lead-implementer',
+   sent:{t:4,e:4,c:3},verdict:'AI management systems lead implementer. EU AI Act aligned. Growing fast in compliance-heavy orgs.',red:false},
+  {id:'a4', name:'OWASP LLM',  full:'OWASP LLM Security Verified',             cost:'TBD',   domain:'ai', level:3,url:'https://owasp.org/www-project-llm-top-10/',
+   sent:{t:4,e:3,c:4},verdict:'OWASP credibility + LLM Top 10 framework. Emerging — watch this.',red:false},
+  {id:'a6', name:'GMLE',       full:'GIAC Machine Learning Engineer',           cost:'$979',  domain:'ai', level:3,url:'https://www.giac.org/certifications/machine-learning-engineer-gmle',
+   sent:{t:4,e:3,c:4},verdict:'MLOps + security at professional level. Forward-looking. GIAC brand helps.',red:false},
+  {id:'a1a',name:'AI-100',      full:'OffSec AI Security Fundamentals',         cost:'~$599', domain:'ai',level:2,url:'https://www.offsec.com/courses/ai-100/',
+   sent:{t:4,e:3,c:4},verdict:'OffSec entry AI security cert. Labs-first approach. Foundation before AI-300.',red:false},
+  {id:'a1b',name:'PAPA',        full:'TCM Practical AI Pentesting Associate',   cost:'~$300', domain:'ai',level:2,url:'https://certifications.tcm-sec.com/papa/',
+   sent:{t:5,e:3,c:5},verdict:'TCM agentic AI pentesting cert. Practical exam attacking AI applications. Brand new and community-respected.',red:true},
+  {id:'a1c',name:'PCSAO',       full:'Palo Alto Networks AI Security Operator', cost:'$155',  domain:'ai',level:2,url:'https://www.paloaltonetworks.com/certifications/',
+   sent:{t:3,e:3,c:2},verdict:'Palo Alto AI security operator cert. Vendor-flavored but decent awareness signal.',red:false},
+  {id:'a1d',name:'Prompt Eng',  full:'DAIR.AI Prompt Engineering Certification',cost:'Free',  domain:'ai',level:2,url:'https://dair.ai/certification/',
+   sent:{t:4,e:2,c:4},verdict:'Community-respected prompt engineering fundamentals. Free, practical, and growing in relevance.',red:false},
+  {id:'a1', name:'eAIS',       full:'INE AI Security Fundamentals',             cost:'~$350', domain:'ai', level:2,url:'https://ine.com/security/certifications/eais-certification',
+   sent:{t:4,e:3,c:3},verdict:'INE practical AI security cert. Covers AI/LLM attack and defense fundamentals.',red:false},
+  {id:'a2', name:'SecAI+',     full:'CompTIA Security AI+',                     cost:'~$300', domain:'ai', level:1,url:'https://comptia.org/en-us/certifications/secai',
+   sent:{t:3,e:3,c:3},verdict:'CompTIA vendor-neutral AI security. Launched Feb 2026. MCQ-based. Emerging.',red:false},
+  {id:'a3', name:'GAISE',      full:'GIAC AI Security Essentials',              cost:'$979',  domain:'ai', level:1,url:'https://www.giac.org/certifications/ai-security-essentials-gaise',
+   sent:{t:4,e:4,c:4},verdict:'First credible hands-on AI security cert. GIAC brand provides strong signal.',red:false},
+  {id:'a0a',name:'Google AI',  full:'Google AI Essentials Certificate',        cost:'Free',  domain:'ai', level:1,url:'https://grow.google/certificates/ai-essentials',
+   sent:{t:3,e:3,c:2},verdict:'Google free AI fundamentals. Awareness-level. Good absolute starting point for AI concepts.',red:false},
+  {id:'a0b',name:'AI-900',     full:'Microsoft Azure AI Fundamentals',         cost:'$165',  domain:'ai', level:1,url:'https://learn.microsoft.com/en-us/certifications/azure-ai-fundamentals/',
+   sent:{t:2,e:3,c:2},verdict:'Microsoft AI awareness cert. Vendor-flavored but widely recognized HR signal.',red:false},
+  {id:'a0c',name:'IBM AI Fnd', full:'IBM AI Fundamentals Certificate',         cost:'Free',  domain:'ai', level:1,url:'https://skillsbuild.org/',
+   sent:{t:3,e:2,c:2},verdict:'IBM free AI fundamentals. Awareness level. Limited employer signal.',red:false},
+
+  // ENGINEERING
+  {id:'e12',name:'OSEE',       full:'OffSec Exploitation Expert',               cost:'$5,000',domain:'eng',level:5,url:'https://www.offsec.com/courses/exp-401/',
+   sent:{t:5,e:5,c:5},verdict:'AWE course. In-person only. Kernel and advanced exploitation engineering. Mythic status — few dozen holders globally.',red:true},
+  {id:'e11',name:'OSED',       full:'OffSec Exploit Developer',                 cost:'$1,499',domain:'eng',level:4,url:'https://www.offsec.com/courses/exp-301/',
+   sent:{t:5,e:5,c:5},verdict:'Win32 exploit development. Engineering offensive tools at the lowest level. One of the hardest certs in existence.',red:true},
+  {id:'e8a',name:'GCSA',       full:'GIAC Cloud Security Automation',           cost:'$979',  domain:'eng',level:4,url:'https://www.giac.org/certifications/cloud-security-automation-gcsa',
+   sent:{t:4,e:4,c:4},verdict:'Cloud security automation expert cert. DevSecOps and cloud pipeline security focus.',red:false},
+  {id:'e6', name:'RHCA',       full:'Red Hat Certified Architect',              cost:'~$3,745',domain:'eng',level:4,url:'https://www.redhat.com/en/services/certification/rhca',
+   sent:{t:5,e:4,c:5},verdict:'Portfolio of practical certs. Genuinely elite engineering credential.',red:false},
+  {id:'g7', name:'CASP+',      full:'CompTIA Advanced Security Practitioner+',  cost:'$509',  domain:'eng',level:3,url:'https://www.comptia.org/en-us/certifications/casp/',
+   sent:{t:3,e:4,c:3},verdict:'DoD 8570 Level III. HR-valuable; community tepid.',red:false},
+  {id:'e5', name:'RHCE',       full:'Red Hat Certified Engineer',               cost:'$400',  domain:'eng',level:3,url:'https://www.redhat.com/en/services/certification/rhce',
+   sent:{t:5,e:4,c:5},verdict:'Ansible + RHCSA depth. Real hands-on signal.',red:false},
+  {id:'e7', name:'GICSP',      full:'GIAC Global Industrial Cyber Security Pro',cost:'$979',  domain:'eng',level:3,url:'https://www.giac.org/certifications/global-industrial-cyber-security-professional-gicsp',
+   sent:{t:4,e:4,c:4},verdict:'ICS/OT gold standard. Required in critical infrastructure.',red:false},
+  {id:'e8', name:'GDSA',       full:'GIAC Defensible Security Architecture',    cost:'$979',  domain:'eng',level:3,url:'https://www.giac.org/certifications/defensible-security-architecture-gdsa',
+   sent:{t:4,e:4,c:4},verdict:'High value for security architects.',red:false},
+  {id:'e4', name:'RHCSA',      full:'Red Hat Certified System Administrator',   cost:'$400',  domain:'eng',level:2,url:'https://www.redhat.com/en/services/certification/rhcsa',
+   sent:{t:5,e:4,c:5},verdict:'All-practical exam. No MCQ. Highly trusted by engineers.',red:false},
+  {id:'e3a',name:'LPIC-2',     full:'LPI Certified Linux Engineer',             cost:'$400',  domain:'eng',level:2,url:'https://www.lpi.org/our-certifications/',
+   sent:{t:4,e:3,c:4},verdict:'Distro-neutral Linux engineer cert. Community respected. Less employer traction than RHCE.',red:false},
+  {id:'e3b',name:'CKAD',       full:'CNCF Certified Kubernetes Application Developer',cost:'$395',domain:'eng',level:2,url:'https://www.cncf.io/certification/ckad/',
+   sent:{t:5,e:4,c:5},verdict:'Hands-on Kubernetes developer cert. Lab-based. No MCQ. Highly respected.',red:false},
+  {id:'e3c',name:'DCA',        full:'Docker Certified Associate',               cost:'$195',  domain:'eng',level:2,url:'https://www.mirantis.com/certification/',
+   sent:{t:4,e:3,c:4},verdict:'Docker/container fundamentals. Practical cert. Good for DevSecOps entry roles.',red:false},
+  {id:'e0', name:'PJMR',       full:'TCM Practical Junior Malware Researcher',  cost:'$399',  domain:'eng',level:2,url:'https://certifications.tcm-sec.com/',
+   sent:{t:5,e:3,c:5},verdict:'TCM entry malware analysis cert. Practical, affordable. Great first RE cert.',red:false},
+  {id:'e0a',name:'Linux+',     full:'CompTIA Linux+',                           cost:'$369',  domain:'eng',level:1,url:'https://www.comptia.org/en-us/certifications/linux/',
+   sent:{t:3,e:3,c:2},verdict:'CompTIA Linux fundamentals. Entry-level Linux cert. LPIC-1 more respected by community.',red:false},
+  {id:'e0b',name:'Cloud Esnt', full:'CompTIA Cloud Essentials+',                cost:'$138',  domain:'eng',level:1,url:'https://www.comptia.org/en-us/certifications/cloud-essentials/',
+   sent:{t:2,e:2,c:1},verdict:'Conceptual cloud overview. Not technical. Awareness-level credential.',red:false},
+  {id:'e0c',name:'KCNA',       full:'CNCF Kubernetes and Cloud Native Associate',cost:'$250', domain:'eng',level:1,url:'https://www.cncf.io/certification/kcna/',
+   sent:{t:4,e:3,c:3},verdict:'CNCF entry-level Kubernetes conceptual cert. Good stepping stone to CKA.',red:false},
+  {id:'e0d',name:'LFCA',       full:'Linux Foundation Certified IT Associate',  cost:'$200',  domain:'eng',level:1,url:'https://training.linuxfoundation.org/certification/',
+   sent:{t:3,e:3,c:3},verdict:'Linux Foundation entry cert. Good foundational IT credential.',red:false},
+  {id:'e0e',name:'MCSF',       full:'Mosse Institute Cloud Services Fundamentals',cost:'$450',domain:'eng',level:1,url:'https://mosse-institute.com/',
+   sent:{t:3,e:2,c:3},verdict:'Mosse cloud fundamentals. Practical approach but low employer recognition.',red:false},
+  {id:'e0f',name:'MSAF',       full:'Mosse Institute System Administration Fundamentals',cost:'$450',domain:'eng',level:1,url:'https://mosse-institute.com/',
+   sent:{t:3,e:2,c:3},verdict:'Mosse sysadmin fundamentals. Practical entry cert. Low employer brand recognition.',red:false},
+
+  // GOVERNANCE & RISK
+  {id:'g14',name:'CISSP-ISSMP',full:'(ISC)² CISSP-ISSMP — Information Security Management Professional',cost:'$599',domain:'gov',level:5,url:'https://www.isc2.org/certifications/cissp-issmp',
+   sent:{t:4,e:5,c:4},verdict:'Requires active CISSP + 2 years management experience. The security management pinnacle. Rarely held outside senior leadership.',red:false},
+  {id:'g12',name:'CISM',       full:'ISACA Certified Info Security Manager',    cost:'$760',  domain:'gov',level:4,url:'https://www.isaca.org/credentialing/cism',
+   sent:{t:4,e:5,c:4},verdict:'Management-track gold standard. High ROI for security leaders.',red:false},
+  {id:'g13',name:'CGEIT Gov',  full:'ISACA Certified in Governance of Enterprise IT',cost:'$760',domain:'gov',level:4,url:'https://www.isaca.org/credentialing/cgeit',
+   sent:{t:4,e:4,c:4},verdict:'Director-level governance signal. Strong enterprise recognition.',red:false},
+  {id:'g11',name:'CISSP',      full:'(ISC)² CISSP',                             cost:'$749',  domain:'gov',level:3,url:'https://www.isc2.org/certifications/cissp',
+   sent:{t:3,e:5,c:4},verdict:'The job-hunting cert. Mile wide, inch deep. Required by many orgs.',red:false},
+  {id:'g10',name:'GSLC',       full:'GIAC Security Leadership Certification',   cost:'$979',  domain:'gov',level:3,url:'https://www.giac.org/certifications/security-leadership-certification-gslc',
+   sent:{t:4,e:4,c:3},verdict:'Leadership-track GIAC. Good management signal.',red:false},
+  {id:'g9', name:'CDPSE',      full:'ISACA Certified Data Privacy Solutions Eng',cost:'$880', domain:'gov',level:3,url:'https://www.isaca.org/credentialing/cdpse',
+   sent:{t:4,e:4,c:4},verdict:'ISACA credibility + technical privacy depth.',red:false},
+  {id:'g3b',name:'27001 LI',   full:'ISO/IEC 27001 Lead Implementer',          cost:'~$930', domain:'gov',level:2,url:'https://pecb.com/en/education-and-certification-for-individuals/iso-iec-27001/iso-iec-27001-lead-implementer',
+   sent:{t:4,e:4,c:3},verdict:'Hands-on ISO 27001 implementation credential. Good practical signal for GRC practitioners.',red:false},
+  {id:'g3c',name:'GRCA',       full:'OCEG GRC Auditor Certification',          cost:'$399',  domain:'gov',level:2,url:'https://www.oceg.org/certifications/',
+   sent:{t:3,e:3,c:2},verdict:'GRC auditing fundamentals. Pairs well with GRCP for governance-track careers.',red:false},
+  {id:'g3d',name:'PMI-RMP',    full:'PMI Risk Management Professional',        cost:'$520',  domain:'gov',level:2,url:'https://www.pmi.org/certifications/risk-management-rmp',
+   sent:{t:3,e:4,c:3},verdict:'PMI risk management specialization. Good signal for enterprise risk roles.',red:false},
+  {id:'g0a',name:'CC (Gov)',    full:'ISC2 Certified in Cybersecurity',         cost:'Free',  domain:'gov',level:1,url:'https://www.isc2.org/certifications/cc',
+   sent:{t:3,e:3,c:3},verdict:'Free foundational cert from ISC2. Decent HR signal for absolute beginners.',red:false},
+  {id:'g0b',name:'GRCP',       full:'OCEG GRC Professional Certification',     cost:'$399',  domain:'gov',level:1,url:'https://www.oceg.org/certifications/',
+   sent:{t:3,e:3,c:2},verdict:'GRC fundamentals cert. Good conceptual overview of governance frameworks.',red:false},
+  {id:'g0c',name:'27001 Fdn',  full:'ISO/IEC 27001 Foundation',                cost:'~$500', domain:'gov',level:1,url:'https://pecb.com/en/education-and-certification-for-individuals/iso-iec-27001/iso-iec-27001-foundation',
+   sent:{t:3,e:3,c:3},verdict:'ISO 27001 awareness level. Good starting point for compliance-track careers.',red:false},
+  {id:'g0d',name:'ITIL Fdn',   full:'ITIL 4 Foundation',                       cost:'$383',  domain:'gov',level:1,url:'https://www.axelos.com/certifications/itil-service-management/itil-4-foundation',
+   sent:{t:3,e:4,c:2},verdict:'IT service management foundation. HR-recognized across industries. Community finds it dry but practical for management roles.',red:false},
+  {id:'g0e',name:'BCS FISMP',  full:'BCS Foundation Certificate in Information Security Management', cost:'$249', domain:'gov',level:1,url:'https://www.bcs.org/certifications/',
+   sent:{t:3,e:2,c:2},verdict:'BCS entry governance cert. Limited recognition outside UK.',red:false},
+  {id:'g0f',name:'NIST Fdn',   full:'NICCS NIST Cybersecurity Framework Fundamentals',cost:'Free',domain:'gov',level:1,url:'https://niccs.cisa.gov/',
+   sent:{t:4,e:3,c:3},verdict:'Free NIST CSF foundational training. Essential reference for US-based governance roles.',red:false},
+
+  // AUDIT & COMPLIANCE
+  {id:'u4', name:'CISA',      full:'ISACA Certified Info Systems Auditor',     cost:'$760',  domain:'audit',level:5,url:'https://www.isaca.org/credentialing/cisa',
+   sent:{t:4,e:5,c:4},verdict:'Audit gold standard. Huge hiring demand across industries.',red:false},
+  {id:'u4a',name:'CRISC',      full:'ISACA Certified in Risk & IS Control',   cost:'$760',  domain:'audit',level:4,url:'https://www.isaca.org/credentialing/crisc',
+   sent:{t:4,e:5,c:4},verdict:'Top-tier risk management credential. High employer demand. Required for senior risk roles.',red:false},
+  {id:'u4b',name:'CGEIT',      full:'ISACA Certified in Governance of Enterprise IT',cost:'$760',domain:'audit',level:4,url:'https://www.isaca.org/credentialing/cgeit',
+   sent:{t:4,e:4,c:4},verdict:'Director-level IT governance credential. Strong enterprise and board-level signal.',red:false},
+  {id:'u4c',name:'CGAP',       full:'IIA Certified Government Auditing Professional',cost:'$445',domain:'audit',level:4,url:'https://www.theiia.org/en/certifications/cgap/',
+   sent:{t:4,e:4,c:3},verdict:'Government audit specialization. Essential for public sector and federal audit roles.',red:false},
+  {id:'u5a',name:'27001 LA Pro',full:'ISO/IEC 27001 Lead Auditor Professional',cost:'~$1,500',domain:'audit',level:3,url:'https://pecb.com/en/education-and-certification-for-individuals/iso-iec-27001/iso-iec-27001-lead-auditor',
+   sent:{t:4,e:4,c:3},verdict:'Senior ISO 27001 audit credential. Expert-level implementation and audit scope management.',red:false},
+  {id:'u5', name:'CGRC',      full:'(ISC)² Certified in Governance Risk & Compliance',cost:'$599',domain:'audit',level:3,url:'https://www.isc2.org/certifications/cgrc',
+   sent:{t:3,e:3,c:3},verdict:'Decent GRC credential. Moderate recognition.',red:false},
+  {id:'u6', name:'CCAK',      full:'ISACA Certificate of Cloud Auditing Knowledge',cost:'$395',domain:'audit',level:3,url:'https://www.isaca.org/credentialing/ccak',
+   sent:{t:4,e:4,c:3},verdict:'Cloud auditing knowledge cert. Covers AI/cloud security governance. ISACA brand credibility.',red:false},
+  {id:'u2', name:'GCIA',      full:'GIAC Certified Intrusion Analyst',         cost:'$979',  domain:'audit',level:3,url:'https://www.giac.org/certifications/intrusion-analyst-gcia',
+   sent:{t:5,e:4,c:5},verdict:'Deep packet analysis. Highly respected by practitioners.',red:false},
+  {id:'u3', name:'GCCC',      full:'GIAC Critical Controls Certification',     cost:'$979',  domain:'audit',level:3,url:'https://www.giac.org/certifications/critical-controls-certification-gccc',
+   sent:{t:4,e:4,c:4},verdict:'CIS Controls focused. Valued in audit and compliance roles.',red:false},
+  {id:'u2a',name:'CIA Full',   full:'IIA Certified Internal Auditor (Full)',   cost:'~$1,335',domain:'audit',level:2,url:'https://www.theiia.org/en/certifications/cia/',
+   sent:{t:4,e:4,c:4},verdict:'Complete IIA CIA credential. Recognized globally for internal audit roles. Three-part exam.',red:false},
+  {id:'u2b',name:'27001 IA',   full:'ISO/IEC 27001 Internal Auditor',         cost:'~$1,500',domain:'audit',level:2,url:'https://pecb.com/en/education-and-certification-for-individuals/iso-iec-27001/iso-iec-27001-internal-auditor',
+   sent:{t:4,e:4,c:3},verdict:'ISO 27001 internal audit credential. Practical signal for compliance auditor roles.',red:false},
+  {id:'u2c',name:'CTPRP',      full:'Shared Assessments Certified Third-Party Risk Professional',cost:'$1,295',domain:'audit',level:2,url:'https://www.sharedassessments.org/certification/',
+   sent:{t:3,e:3,c:2},verdict:'Third-party risk management cert. Niche but valuable in vendor risk assessment roles.',red:false},
+  {id:'u2d',name:'ISO 27001 LA',full:'ISO/IEC 27001 Lead Auditor',            cost:'~$930', domain:'audit',level:2,url:'https://pecb.com/en/education-and-certification-for-individuals/iso-iec-27001/iso-iec-27001-lead-auditor',
+   sent:{t:4,e:4,c:3},verdict:'Lead auditor credential for ISO 27001. Strong practical signal. Required for external audit roles.',red:false},
+  {id:'u1', name:'GMON',      full:'GIAC Continuous Monitoring',               cost:'$979',  domain:'audit',level:2,url:'https://www.giac.org/certifications/continuous-monitoring-gmon',
+   sent:{t:4,e:4,c:4},verdict:'SOC/blue team staple. Solid monitoring and audit content.',red:false},
+  {id:'u0a',name:'27001 Fnd A',full:'ISO/IEC 27001 Foundation (Audit track)', cost:'~$500', domain:'audit',level:1,url:'https://pecb.com/en/education-and-certification-for-individuals/iso-iec-27001/iso-iec-27001-foundation',
+   sent:{t:3,e:3,c:3},verdict:'ISO 27001 awareness for audit track. Starting point before internal auditor certs.',red:false},
+  {id:'u0b',name:'COBIT Fdn',  full:'ISACA COBIT Foundation',                  cost:'~$250', domain:'audit',level:1,url:'https://www.isaca.org/credentialing/cobit-foundation',
+   sent:{t:3,e:3,c:3},verdict:'COBIT governance framework foundational cert. Important reference for IT audit careers.',red:false},
+  {id:'u0c',name:'SOC 2 Fnd',  full:'AICPA SOC 2 Fundamentals',               cost:'Free',  domain:'audit',level:1,url:'https://www.aicpa-cima.com/resources/landing/soc-2-fundamentals-certificate',
+   sent:{t:3,e:3,c:3},verdict:'SOC 2 awareness training. Essential foundational knowledge for US compliance audit roles.',red:false},
+  {id:'u0d',name:'NIST Fnd A', full:'NIST Cybersecurity Framework Fundamentals',cost:'Free', domain:'audit',level:1,url:'https://niccs.cisa.gov/',
+   sent:{t:4,e:3,c:3},verdict:'NIST CSF foundational training. Core reference framework for US audit and compliance work.',red:false},
+  {id:'u0f',name:'IIA CIA P1', full:'IIA Certified Internal Auditor Part 1',   cost:'$445',  domain:'audit',level:1,url:'https://www.theiia.org/en/certifications/cia/',
+   sent:{t:4,e:4,c:3},verdict:'First part of the IIA CIA credential. Foundational internal audit concepts.',red:false},
+  {id:'u0g',name:'CC (Audit)', full:'ISC2 Certified in Cybersecurity (Audit track)',cost:'Free',domain:'audit',level:1,url:'https://www.isc2.org/certifications/cc',
+   sent:{t:3,e:3,c:3},verdict:'Free ISC2 foundational cert. Good entry signal for audit-track beginners.',red:false},
+
+  // BLUE TEAM / SOC
+  {id:'o15',name:'GREM',       full:'GIAC Reverse Engineering Malware',         cost:'$979',  domain:'ops',level:5,url:'https://www.giac.org/certifications/reverse-engineering-malware-grem',
+   sent:{t:5,e:5,c:5},verdict:'Malware analysis gold standard. Elite recognition. God-tier blue team cert.',red:false},
+  {id:'o9', name:'GCFA',       full:'GIAC Certified Forensic Analyst',          cost:'$979',  domain:'ops',level:4,url:'https://www.giac.org/certifications/certified-forensic-analyst-gcfa',
+   sent:{t:5,e:4,c:5},verdict:'DFIR gold standard. Deep forensics expertise. Highly respected.',red:false},
+  {id:'o10',name:'OSDA',       full:'OffSec Defense Analyst',                   cost:'$2,499',domain:'ops',level:4,url:'https://www.offsec.com/courses/soc-200/',
+   sent:{t:3,e:4,c:3},verdict:'OffSec 24-hr practical blue team exam. Solid content, growing recognition.',red:false},
+  {id:'o11',name:'GCTI',       full:'GIAC Cyber Threat Intelligence',           cost:'$979',  domain:'ops',level:4,url:'https://www.giac.org/certifications/cyber-threat-intelligence-gcti',
+   sent:{t:4,e:4,c:5},verdict:'CTI community sees this as the best threat intel cert.',red:false},
+  {id:'o12',name:'eCTHP',      full:'INE Certified Threat Hunting Professional',cost:'~$350', domain:'ops',level:4,url:'https://ine.com/security/certifications/ecthp-certification',
+   sent:{t:5,e:3,c:4},verdict:'Advanced threat hunting. MITRE ATT&CK + hypothesis-driven hunting.',red:false},
+  {id:'o13',name:'eCDFP',      full:'INE Certified Digital Forensics Pro',      cost:'~$350', domain:'ops',level:4,url:'https://ine.com/security/certifications/ecdfp-certification',
+   sent:{t:5,e:3,c:4},verdict:'Senior-level digital forensics. Real-world forensic environment exam.',red:false},
+  {id:'o14',name:'GCFR',       full:'GIAC Cloud Forensics Responder',           cost:'$979',  domain:'ops',level:4,url:'https://www.giac.org/certifications/cloud-forensics-responder-gcfr',
+   sent:{t:4,e:4,c:4},verdict:'Cloud DFIR specialist cert. Well-timed for the market.',red:false},
+  {id:'o8', name:'HTB CDSA',   full:'HTB Certified Defensive Security Analyst', cost:'$355',  domain:'ops',level:4,url:'https://academy.hackthebox.com/preview/certifications/htb-certified-defensive-security-analyst',
+   sent:{t:5,e:4,c:5},verdict:'HTB quality labs. 7-day exam. Strong community endorsement.',red:false},
+  {id:'o4', name:'eEDA',       full:'INE Enterprise Defense Administrator',     cost:'~$350', domain:'ops',level:3,url:'https://ine.com/security/certifications/eeda-certification',
+   sent:{t:5,e:3,c:4},verdict:'INE intermediate blue team. Hands-on infra hardening and log analysis.',red:false},
+  {id:'o5', name:'PSAP',       full:'TCM Practical SOC Analyst Professional',   cost:'~$350', domain:'ops',level:3,url:'https://certifications.tcm-sec.com/psap',
+   sent:{t:5,e:3,c:5},verdict:'TCM intermediate SOC. 3-day exam + 2-day IR report. Threat hunting focus.',red:false},
+  {id:'o6', name:'eCIR',       full:'INE Certified Incident Responder',         cost:'~$350', domain:'ops',level:3,url:'https://ine.com/security/certifications/ecir-certification',
+   sent:{t:5,e:3,c:4},verdict:'Intermediate IR cert. Practical lab simulating corporate breach. No MCQ.',red:false},
+  {id:'o7', name:'GCIH',       full:'GIAC Certified Incident Handler',          cost:'$979',  domain:'ops',level:3,url:'https://www.giac.org/certifications/certified-incident-handler-gcih',
+   sent:{t:4,e:4,c:5},verdict:'Community favorite for incident response. Solid practical content.',red:false},
+  {id:'o1a',name:'CSX-P',      full:'ISACA Cybersecurity Practitioner',        cost:'$549',  domain:'ops',level:2,url:'https://www.isaca.org/credentialing/csx-p',
+   sent:{t:3,e:3,c:3},verdict:'ISACA practical SOC cert. Lab-based exam. Growing recognition in enterprise blue team roles.',red:false},
+  {id:'o1b',name:'CFR',        full:'CertNexus CyberSec First Responder',      cost:'$250',  domain:'ops',level:2,url:'https://certnexus.com/certification/cybersec-first-responder-cfr/',
+   sent:{t:3,e:3,c:2},verdict:'Entry IR cert. DoD 8570 aligned. Practical incident response fundamentals.',red:false},
+  {id:'o1c',name:'GCFE',       full:'GIAC Certified Forensics Examiner',       cost:'$979',  domain:'ops',level:2,url:'https://www.giac.org/certifications/certified-forensics-examiner-gcfe',
+   sent:{t:4,e:4,c:4},verdict:'Good GIAC entry forensics cert. Practical evidence handling and analysis.',red:false},
+  {id:'o1', name:'eSOC',       full:'INE Security Operations Certified L1',     cost:'~$350', domain:'ops',level:2,url:'https://ine.com/security/certifications/esoc-certification',
+   sent:{t:5,e:3,c:4},verdict:'INE SOC Tier 1 practical cert. SIEM, alert triage, incident detection.',red:false},
+  {id:'o2', name:'PSAA',       full:'TCM Practical SOC Analyst Associate',      cost:'~$300', domain:'ops',level:2,url:'https://certifications.tcm-sec.com/psaa',
+   sent:{t:5,e:3,c:5},verdict:'TCM blue team entry. Fully practical SOC environment exam. No MCQ.',red:false},
+  {id:'o0b',name:'ISC2 CC',    full:'ISC2 Certified in Cybersecurity',         cost:'Free',  domain:'ops',level:1,url:'https://www.isc2.org/certifications/cc',
+   sent:{t:3,e:3,c:3},verdict:'Free foundational cert. Good HR signal for absolute beginners entering blue team.',red:false},
+  {id:'o0c',name:'MICS',       full:'Mosse Institute Intro to Cyber Security', cost:'Free',  domain:'ops',level:1,url:'https://mosse-institute.com/',
+   sent:{t:3,e:2,c:3},verdict:'Free Mosse intro cert. Good practical starting point before SOC-specific certs.',red:false},
+  {id:'o0d',name:'CSA',        full:'EC-Council Certified SOC Analyst',        cost:'$550',  domain:'ops',level:1,url:'https://www.eccouncil.org/programs/certified-soc-analyst-csa/',
+   sent:{t:2,e:3,c:1},verdict:'EC-Council SOC entry cert. MCQ-heavy. HR sometimes requires it. Community tepid.',red:false},
+  {id:'o0e',name:'MESE',       full:'Mosse Institute Enterprise Security Engineer',cost:'$450',domain:'ops',level:1,url:'https://mosse-institute.com/',
+   sent:{t:3,e:2,c:3},verdict:'Mosse defensive security fundamentals. Practical approach. Low employer recognition.',red:false},
+  {id:'o0f',name:'OPSA',       full:'ISECOM OSSTMM Professional Security Analyst',cost:'$100/yr',domain:'ops',level:1,url:'https://www.isecom.org/certification/',
+   sent:{t:3,e:2,c:2},verdict:'ISECOM OSSTMM-based analyst cert. Niche methodology, low mainstream recognition.',red:false},
+  {id:'o3', name:'CySA+',      full:'CompTIA Cybersecurity Analyst+',           cost:'$404',  domain:'ops',level:1,url:'https://www.comptia.org/en-us/certifications/cybersecurity-analyst/',
+   sent:{t:3,e:4,c:3},verdict:'HR gold, technically moderate. DoD 8570 valued. MCQ-based foundational cert.',red:false},
+];
+
+// ── ORGS ──────────────────────────────────────────────────────────────────────
+const ORGS=[
+  {id:'sans',      name:'SANS / GIAC', full:'SANS Institute / GIAC',
+   url:'https://sans.org',             primaryDomain:'ops',
+   domains:['net','web','ai','eng','gov','audit','ops'],
+   level:4, scores:{t:4,e:5,c:5},
+   vt:'SANS produces highly comprehensive technical security training authored by active practitioners. Content depth is genuinely strong. The caveat is that GIAC exams are closely tied to proprietary course books — material not covered in the official SANS curriculum is unlikely to appear, but material that is in those books may not be found anywhere else. Passing without the official materials is a measurably higher risk.',
+   ve:'GIAC certifications are among the most recognized credentials in security hiring. Employers across government, defense contracting, and enterprise actively require or prefer them. A GIAC cert on a resume opens doors at every level.',
+   vc:'The security community holds SANS and GIAC in genuine high regard — not just as credentials, but as a signal that someone invested in deep technical knowledge. Widely respected at conferences, in CTF circles, and across practitioner communities.'},
+  {id:'offsec',    name:'OffSec',      full:'Offensive Security',
+   url:'https://offensive-security.com', primaryDomain:'net',
+   domains:['net','web','ai','ops'],
+   level:4, scores:{t:3,e:5,c:2},
+   vt:'The training material itself has drawn consistent criticism for being outdated, poorly structured, and lacking instructional quality. The labs are the product — the written content around them is not. Many practitioners find better learning value elsewhere at a fraction of the cost.',
+   ve:'HR and hiring managers treat OffSec certifications, particularly OSCP, as a near-mandatory filter for penetration testing roles. It functions as a gatekeeper credential — having it gets you past screening regardless of what practitioners think of it.',
+   vc:'The practitioner community has significant reservations about OffSec as an organization. The certifications carry weight by reputation and historical inertia more than current quality. Those who have completed the certs often credit the labs despite the organization, not because of it.'},
+  {id:'htb',       name:'Hack The Box',full:'Hack The Box Academy',
+   url:'https://academy.hackthebox.com', primaryDomain:'net',
+   domains:['net','web','ai','ops'],
+   level:4, scores:{t:5,e:4,c:5},
+   vt:'Hack The Box Academy delivers exceptional hands-on training at an accessible price point. Content is continuously updated, lab environments are realistic, and the learning path structure is well designed across both offensive and defensive disciplines.',
+   ve:'Employer recognition has grown substantially. HTB certifications are increasingly appearing in job requirements. Still building the same weight as OSCP or GIAC but trending strongly upward.',
+   vc:'Universally loved by the practitioner community. The platform cultivated a massive active user base through CTF challenges before expanding into structured learning. Community enthusiasm is genuine and consistently high.'},
+  {id:'tcm',       name:'TCM Security',full:'TCM Security',
+   url:'https://tcm-sec.com',           primaryDomain:'net',
+   domains:['net','web','ai','ops'],
+   level:3, scores:{t:5,e:3,c:5},
+   vt:'TCM Security produces practical, well-paced training that prioritizes real-world applicability over checkbox coverage. Heath Adams has built a reputation for making complex offensive and defensive techniques accessible without sacrificing depth. Strong value at the price point.',
+   ve:'HR recognition is still developing. The PNPT is gaining traction but has not yet reached the screening-filter status of OSCP. Organizations familiar with the space increasingly respect it; keyword-filtered ATS systems may not flag it yet.',
+   vc:'The community has embraced TCM Security enthusiastically. Regarded as one of the most honest, student-focused training providers in the industry. Strong word-of-mouth, active Discord community, and a reputation for putting learners first.'},
+  {id:'portswigger',name:'PortSwigger',full:'PortSwigger Web Security Academy',
+   url:'https://portswigger.net/web-security', primaryDomain:'web',
+   domains:['web','net'],
+   level:4, scores:{t:5,e:2,c:5},
+   vt:'PortSwigger Web Security Academy is arguably the finest free web application security training in existence. Content is authored by the creators of Burp Suite, deeply technical, and kept current with modern vulnerability classes. The BSCP exam is legitimately rigorous.',
+   ve:'HR departments largely do not recognize the PortSwigger name or the BSCP certification yet. Recognition is growing but still limited to technically sophisticated hiring teams.',
+   vc:'Practitioners hold PortSwigger in extremely high regard. The Web Security Academy is the default recommendation for anyone entering web application security. Community consensus: it outperforms most paid alternatives.'},
+  {id:'els',       name:'INE',         full:'INE (formerly eLearnSecurity)',
+   url:'https://ine.com',               primaryDomain:'net',
+   domains:['net','web','ai','ops'],
+   level:3, scores:{t:5,e:3,c:4},
+   vt:'INE, operating the former eLearnSecurity course catalog, provides strong hands-on training across penetration testing, web application security, and blue team disciplines. The eJPT and eCPPT learning paths are well structured and lab-heavy. The transition from eLearnSecurity introduced some catalog inconsistency but the core courses remain high quality.',
+   ve:'HR recognition is moderate. The INE brand has not achieved the same screening-filter status as OSCP or GIAC certifications.',
+   vc:'Community reception has been generally positive, with some friction around the rebranding from eLearnSecurity. The original eLS content built a loyal following and that sentiment has largely carried over.'},
+  {id:'isaca',     name:'ISACA',       full:'ISACA',
+   url:'https://isaca.org',             primaryDomain:'gov',
+   domains:['gov','audit'],
+   level:4, scores:{t:1,e:4,c:4},
+   vt:'ISACA training materials have not produced practitioners who demonstrate strong applied knowledge in the field. The credential value is real and the exams test a defined body of knowledge, but the training itself does not appear to translate into measurable competence in a way that is consistently observable.',
+   ve:'ISACA certifications — particularly CISM, CISA, and CRISC — are among the most in-demand in security management and audit hiring. They appear consistently in job requirements at the manager and director level.',
+   vc:'The practitioner community respects ISACA credentials as meaningful career signals, particularly for those moving into management or audit roles. They are viewed as substantive credentials rather than checkbox items.'},
+  {id:'isc2',      name:'(ISC)²',      full:'(ISC)²',
+   url:'https://isc2.org',              primaryDomain:'gov',
+   domains:['gov','eng','web','audit','ops'],
+   level:4, scores:{t:2,e:5,c:3},
+   vt:'(ISC)² training materials cover a very broad surface area but rarely achieve significant depth in any individual domain. The CISSP is famously described as covering a mile wide and an inch deep — comprehensive as a survey but not a substitute for specialization.',
+   ve:'CISSP is one of the most recognized security credentials in corporate and government hiring. It appears in an enormous volume of job postings and functions as a baseline requirement for many management-adjacent roles.',
+   vc:'The practitioner community is divided. CISSP is broadly acknowledged as a useful career credential while being simultaneously criticized for not driving anyone into a specific technical discipline.'},
+  {id:'ec',        name:'EC-Council',  full:'EC-Council',
+   url:'https://eccouncil.org',         primaryDomain:'net',
+   domains:['net','ops','gov'],
+   level:2, scores:{t:1,e:3,c:1},
+   vt:'EC-Council training quality is widely regarded as poor. Content is frequently outdated, heavily multiple-choice focused, and does not reflect real-world offensive or defensive practice. CEH in particular has drawn sustained criticism for teaching memorization rather than applicable skill.',
+   ve:'Despite its poor reputation among practitioners, EC-Council certifications maintain a foothold in HR systems, particularly CEH. Government and defense contractor job postings continue to list it due to DoD 8570 alignment.',
+   vc:'The practitioner community views EC-Council with consistent skepticism. CEH is frequently cited as the canonical example of a credential that looks good on paper and delivers little of value technically.'},
+  {id:'comptia',   name:'CompTIA',     full:'CompTIA',
+   url:'https://comptia.org',           primaryDomain:'gov',
+   domains:['net','eng','gov','ops'],
+   level:2, scores:{t:2,e:4,c:4},
+   vt:'CompTIA\'s own official training materials produce mixed results. Most practitioners who succeed on CompTIA exams credit third-party educators — Professor Messer and Jason Dion — rather than CompTIA\'s official content. Both operate independently. CompTIA recently launched SecAI+, making it the first major cert body to address AI security at the foundational level.',
+   ve:'CompTIA certifications are well recognized across HR and hiring pipelines. Security+ satisfies DoD 8570 baseline requirements. CySA+ carries meaningful weight for SOC analyst roles.',
+   vc:'The community is more supportive of CompTIA than its reputation sometimes suggests. Security+ is not mocked the way CEH is — it is viewed as an honest entry credential. Professor Messer and Jason Dion are well regarded as educators.'},
+  {id:'redhat',    name:'Red Hat',     full:'Red Hat',
+   url:'https://redhat.com',            primaryDomain:'eng',
+   domains:['eng'],
+   level:4, scores:{t:5,e:4,c:5},
+   vt:'Red Hat certifications are entirely performance-based with no multiple choice component. RHCSA and RHCE require demonstrating live system administration skills under exam conditions. The training is rigorous and the content is directly applicable to production environments.',
+   ve:'Red Hat certifications are well respected in engineering and security engineering hiring. Strong positive signal for infrastructure and DevSecOps roles.',
+   vc:'Engineers hold Red Hat certifications in high regard specifically because of the performance-based format. In a landscape saturated with MCQ exams, RHCSA and RHCE stand out as credentials that require actually knowing the material.'},
+  {id:'pmi',       name:'PMI',         full:'Project Management Institute',
+   url:'https://pmi.org',               primaryDomain:'gov',
+   domains:['gov'],
+   level:4, scores:{t:3,e:5,c:3},
+   vt:'PMI training and preparation materials are thorough within the project management domain but contain limited security-specific content. The PMP is an effective credential for demonstrating project governance competence.',
+   ve:'PMP is the recognized gold standard for project management credentials across virtually every industry. Highly valued for program management, security operations leadership, and executive-adjacent roles. Notable surplus of certified project managers in the market.',
+   vc:'The community respects PMP as a legitimate management credential without treating it as a technical security signal. The perception that the market is oversaturated with project managers has tempered enthusiasm somewhat.'},
+];
+
+// ── ORG COLORS ───────────────────────────────────────────────────────────────
+const ORG_COLORS={
+  sans:'#f59e0b',offsec:'#ef4444',htb:'#22c55e',tcm:'#a3e635',
+  portswigger:'#06b6d4',els:'#8b5cf6',isaca:'#64748b',isc2:'#0ea5e9',
+  ec:'#dc2626',comptia:'#94a3b8',redhat:'#cc0000',pmi:'#10b981',
+};
+
+// ── GEOMETRY ─────────────────────────────────────────────────────────────────
+const SVG_NS='http://www.w3.org/2000/svg';
+const svg=document.getElementById('wheel');
+const R_INNER=52;
+const R_RINGS=[0,80,138,200,272,352];
+const N=DOMAINS.length;
+const GAP=0.022;
+
+function domAngle(i){return -Math.PI/2+(2*Math.PI*i)/N;}
+function polar(r,a){return[r*Math.cos(a),r*Math.sin(a)];}
+
+function arcPath(r1,r2,aS,aE){
+  const[x1,y1]=polar(r2,aS),[x2,y2]=polar(r2,aE),[x3,y3]=polar(r1,aE),[x4,y4]=polar(r1,aS);
+  const lg=(aE-aS)>Math.PI?1:0;
+  return`M${x1} ${y1}A${r2} ${r2} 0 ${lg} 1 ${x2} ${y2}L${x3} ${y3}A${r1} ${r1} 0 ${lg} 0 ${x4} ${y4}Z`;
+}
+
+function scoreColor(s){
+  const t=(s-1)/4;
+  const r=Math.round(180-t*130),g=Math.round(40+t*175),b=Math.round(60+t*40);
+  return`rgb(${r},${g},${b})`;
+}
+
+// ── BUILD STATIC WHEEL ───────────────────────────────────────────────────────
+function buildWheel(){
+  const defs=document.createElementNS(SVG_NS,'defs');
+  DOMAINS.forEach(d=>{
+    const g=document.createElementNS(SVG_NS,'radialGradient');
+    g.id=`grad-${d.key}`;
+    g.setAttribute('cx','0');g.setAttribute('cy','0');g.setAttribute('r','360');
+    g.setAttribute('gradientUnits','userSpaceOnUse');
+    [{off:'0%',op:'0.06'},{off:'100%',op:'0.2'}].forEach(({off,op})=>{
+      const s=document.createElementNS(SVG_NS,'stop');
+      s.setAttribute('offset',off);s.setAttribute('stop-color',d.color);s.setAttribute('stop-opacity',op);
+      g.appendChild(s);
+    });
+    defs.appendChild(g);
+  });
+  svg.appendChild(defs);
+
+  R_RINGS.forEach((r,i)=>{
+    if(i===0)return;
+    const band=document.createElementNS(SVG_NS,'circle');
+    band.setAttribute('cx',0);band.setAttribute('cy',0);band.setAttribute('r',r);
+    band.setAttribute('fill','none');
+    band.setAttribute('stroke',i%2===0?'#1a1d28':'#22253a');
+    band.setAttribute('stroke-width',R_RINGS[i]-R_RINGS[i-1]);
+    band.setAttribute('stroke-opacity','0.4');
+    svg.appendChild(band);
+  });
+
+  R_RINGS.forEach((r,i)=>{
+    if(i===0)return;
+    const invI=5-i;
+    const col=TIERS[invI]?TIERS[invI].color:'#3a3f5c';
+    const c=document.createElementNS(SVG_NS,'circle');
+    c.setAttribute('cx',0);c.setAttribute('cy',0);c.setAttribute('r',r);
+    c.setAttribute('fill','none');c.setAttribute('stroke',col);
+    c.setAttribute('stroke-width',i===1?'2':'1.2');
+    c.setAttribute('stroke-opacity',i===1?'0.95':'0.5');
+    if(i===5)c.setAttribute('stroke-dasharray','4 4');
+    svg.appendChild(c);
+  });
+
+  TIERS.forEach((tier,i)=>{
+    const invI=4-i;
+    const r=R_RINGS[invI],rN=R_RINGS[invI+1];
+    const midR=(r+rN)/2;
+    [-midR,midR].forEach(y=>{
+      const t=document.createElementNS(SVG_NS,'text');
+      t.setAttribute('x',0);t.setAttribute('y',y);
+      t.setAttribute('text-anchor','middle');t.setAttribute('dominant-baseline','middle');
+      t.setAttribute('fill',tier.color);t.setAttribute('font-size','8');
+      t.setAttribute('font-weight','800');t.setAttribute('letter-spacing','1.5');
+      t.setAttribute('pointer-events','none');t.setAttribute('opacity','0.85');
+      t.textContent=tier.name.toUpperCase();
+      svg.appendChild(t);
+    });
+  });
+
+  const degLabels=[
+    {ringIdx:5,label:"FOUNDATIONAL · 0-2 YRS",tierIdx:0},
+    {ringIdx:4,label:"PRACTICAL · ASSOCIATE'S DEGREE · 2-4 YRS",tierIdx:1},
+    {ringIdx:3,label:"PROFESSIONAL · BACHELOR'S DEGREE · 4-10 YRS",tierIdx:2},
+    {ringIdx:2,label:"EXPERT · MASTER'S DEGREE · 10-20 YRS",tierIdx:3},
+    {ringIdx:1,label:"GOD TIER · PHD · 20+ YRS",tierIdx:4},
+  ];
+  const defsD=document.createElementNS(SVG_NS,'defs');
+  degLabels.forEach(({ringIdx,label,tierIdx})=>{
+    const r=R_RINGS[ringIdx];
+    const col=TIERS[tierIdx].color;
+    const pid=`deg-arc-${ringIdx}`;
+    const p=document.createElementNS(SVG_NS,'path');
+    p.id=pid;
+    p.setAttribute('d',`M ${-r} 0 A ${r} ${r} 0 0 0 ${r} 0`);
+    defsD.appendChild(p);
+    const dt=document.createElementNS(SVG_NS,'text');
+    dt.setAttribute('font-size','6.5');dt.setAttribute('font-weight','700');
+    dt.setAttribute('fill',col);dt.setAttribute('opacity','0.6');
+    dt.setAttribute('letter-spacing','1');dt.setAttribute('pointer-events','none');
+    const tp=document.createElementNS(SVG_NS,'textPath');
+    tp.setAttribute('href',`#${pid}`);
+    tp.setAttribute('startOffset','50%');tp.setAttribute('text-anchor','middle');
+    tp.textContent=label;
+    dt.appendChild(tp);
+    svg.appendChild(dt);
+  });
+  svg.insertBefore(defsD,svg.firstChild);
+
+  DOMAINS.forEach((d,i)=>{
+    const aS=domAngle(i)+GAP/2,aE=domAngle(i+1)-GAP/2;
+    const bg=document.createElementNS(SVG_NS,'path');
+    bg.setAttribute('d',arcPath(R_INNER,R_RINGS[5],aS,aE));
+    bg.setAttribute('fill',`url(#grad-${d.key})`);
+    bg.setAttribute('stroke','#0a0c12');bg.setAttribute('stroke-width','1.5');
+    bg.setAttribute('class',`domain-bg domain-bg-${d.key}`);
+    svg.appendChild(bg);
+
+    const aMid=(aS+aE)/2;
+    const[lx,ly]=polar(R_RINGS[5]+26,aMid);
+    const ang=aMid*180/Math.PI+90,flip=lx<-5?180:0;
+    const tg=document.createElementNS(SVG_NS,'g');
+    tg.setAttribute('transform',`translate(${lx.toFixed(1)},${ly.toFixed(1)}) rotate(${(ang+flip).toFixed(1)})`);
+    d.label.split('\n').forEach((line,li,arr)=>{
+      const tl=document.createElementNS(SVG_NS,'text');
+      tl.setAttribute('text-anchor','middle');tl.setAttribute('dominant-baseline','middle');
+      tl.setAttribute('fill',d.color);tl.setAttribute('font-size','9');
+      tl.setAttribute('font-weight','800');tl.setAttribute('pointer-events','none');
+      const off=((li-(arr.length-1)/2)*12).toFixed(1);
+      tl.setAttribute('y',off);tl.textContent=line;
+      tg.appendChild(tl);
+    });
+    svg.appendChild(tg);
+
+    const[sx,sy]=polar(R_RINGS[5]+16,aS-GAP/2);
+    const[sx2,sy2]=polar(R_INNER,aS-GAP/2);
+    const sp=document.createElementNS(SVG_NS,'line');
+    sp.setAttribute('x1',sx2);sp.setAttribute('y1',sy2);
+    sp.setAttribute('x2',sx);sp.setAttribute('y2',sy);
+    sp.setAttribute('stroke','#0a0c12');sp.setAttribute('stroke-width','1.5');
+    svg.appendChild(sp);
+  });
+
+  const cc=document.createElementNS(SVG_NS,'circle');
+  cc.setAttribute('cx',0);cc.setAttribute('cy',0);cc.setAttribute('r',R_INNER);
+  cc.setAttribute('fill','#0a0c12');cc.setAttribute('stroke','#3a3f5c');cc.setAttribute('stroke-width','1.5');
+  svg.appendChild(cc);
+  [{y:-9,t:'SEC'},{y:7,t:'MAP'}].forEach(({y,t})=>{
+    const tx=document.createElementNS(SVG_NS,'text');
+    tx.setAttribute('x',0);tx.setAttribute('y',y);tx.setAttribute('text-anchor','middle');
+    tx.setAttribute('fill','#818cf8');tx.setAttribute('font-size','9');
+    tx.setAttribute('font-weight','800');tx.setAttribute('letter-spacing','3');
+    tx.setAttribute('pointer-events','none');tx.textContent=t;
+    svg.appendChild(tx);
+  });
+
+  const HR1=R_RINGS[5]+70,HR2=R_RINGS[5]+102,HM=(HR1+HR2)/2;
+  const halo=document.createElementNS(SVG_NS,'circle');
+  halo.setAttribute('cx',0);halo.setAttribute('cy',0);halo.setAttribute('r',HM);
+  halo.setAttribute('fill','none');halo.setAttribute('stroke','#d1d5e8');
+  halo.setAttribute('stroke-width',HR2-HR1);halo.setAttribute('stroke-opacity','0.08');
+  svg.appendChild(halo);
+  [{r:HR1,op:'0.25'},{r:HR2,op:'0.4'}].forEach(({r,op})=>{
+    const c=document.createElementNS(SVG_NS,'circle');
+    c.setAttribute('cx',0);c.setAttribute('cy',0);c.setAttribute('r',r);
+    c.setAttribute('fill','none');c.setAttribute('stroke','#c8d0e8');
+    c.setAttribute('stroke-width','1');c.setAttribute('stroke-opacity',op);
+    c.setAttribute('stroke-dasharray','4 3');
+    svg.appendChild(c);
+  });
+
+  const hDefs=document.createElementNS(SVG_NS,'defs');
+  const hpTop=document.createElementNS(SVG_NS,'path');
+  hpTop.id='halo-top';
+  hpTop.setAttribute('d',`M ${-HM} 0 A ${HM} ${HM} 0 0 1 ${HM} 0`);
+  const hpBot=document.createElementNS(SVG_NS,'path');
+  hpBot.id='halo-bot';
+  hpBot.setAttribute('d',`M ${-HM} 0 A ${HM} ${HM} 0 0 0 ${HM} 0`);
+  hDefs.appendChild(hpTop);hDefs.appendChild(hpBot);
+  svg.appendChild(hDefs);
+
+  ['halo-top','halo-bot'].forEach(pid=>{
+    const ht=document.createElementNS(SVG_NS,'text');
+    ht.setAttribute('font-size','7.5');ht.setAttribute('font-weight','800');
+    ht.setAttribute('fill','#c8d0e8');ht.setAttribute('letter-spacing','2');
+    ht.setAttribute('pointer-events','none');ht.setAttribute('opacity','0.7');
+    const tp=document.createElementNS(SVG_NS,'textPath');
+    tp.setAttribute('href',`#${pid}`);tp.setAttribute('startOffset','50%');tp.setAttribute('text-anchor','middle');
+    tp.textContent='START HERE · GENERALIST BASELINE · START HERE · GENERALIST BASELINE · START HERE · GENERALIST BASELINE · START HERE · GENERALIST BASELINE ·';
+    ht.appendChild(tp);svg.appendChild(ht);
+  });
+
+
+}
+
+// ── PLACE CERT NODES ─────────────────────────────────────────────────────────
+function placeCerts(list){
+  svg.querySelectorAll('.cert-node').forEach(n=>n.remove());
+  const counters={},totals={};
+  DOMAINS.forEach(d=>{for(let l=1;l<=5;l++)counters[`${d.key}-${l}`]=0;});
+  list.forEach(c=>{const k=`${c.domain}-${c.level}`;totals[k]=(totals[k]||0)+1;});
+
+  list.forEach(cert=>{
+    const di=DOMAINS.findIndex(d=>d.key===cert.domain);
+    if(di===-1)return;
+    const d=DOMAINS[di],lvl=cert.level;
+    const invLvl=6-lvl;
+    const k=`${cert.domain}-${lvl}`;
+    const si=counters[k]++,total=totals[k]||1;
+    const aS=domAngle(di)+GAP/2,aE=domAngle(di+1)-GAP/2,aSpan=aE-aS;
+    const step=aSpan/(total+1),nodeAngle=aS+step*(si+1);
+    const r1=R_RINGS[invLvl-1]+4,r2=R_RINGS[invLvl]-4,nodeR=(r1+r2)/2;
+    const[nx,ny]=polar(nodeR,nodeAngle);
+    const maxW=Math.min(aSpan*nodeR*0.88,36),h=cert.red?13:11;
+
+    const g=document.createElementNS(SVG_NS,'g');
+    g.setAttribute('class','cert-node');
+    g.setAttribute('transform',`translate(${nx.toFixed(1)},${ny.toFixed(1)})`);
+    g.style.opacity='0';g.style.transition='opacity 0.3s ease';
+    g.setAttribute('cursor','pointer');
+
+    const rect=document.createElementNS(SVG_NS,'rect');
+    rect.setAttribute('x',-(maxW/2));rect.setAttribute('y',-(h/2));
+    rect.setAttribute('width',maxW);rect.setAttribute('height',h);rect.setAttribute('rx',3);
+    rect.setAttribute('fill',d.color);rect.setAttribute('fill-opacity','0.82');
+    rect.setAttribute('stroke',d.color);rect.setAttribute('stroke-width','1');
+    rect.setAttribute('stroke-opacity','1');
+
+    const label=cert.red?`⚔${cert.name}`:cert.name;
+    const txt=document.createElementNS(SVG_NS,'text');
+    txt.setAttribute('text-anchor','middle');txt.setAttribute('dominant-baseline','middle');
+    txt.setAttribute('fill','#050710');
+    txt.setAttribute('font-size',Math.min(6.2,maxW/(label.length+0.5)*1.1).toFixed(1));
+    txt.setAttribute('font-weight','800');txt.setAttribute('pointer-events','none');
+    txt.textContent=label;
+
+    g.appendChild(rect);g.appendChild(txt);
+    g.addEventListener('mouseenter',e=>showCertTip(e,cert,d));
+    g.addEventListener('mousemove',moveTooltip);
+    g.addEventListener('mouseleave',hideTooltip);
+    g.addEventListener('click',()=>openCertCard(cert,d));
+    svg.appendChild(g);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{g.style.opacity='1';}));
+  });
+}
+
+// ── CERT CARD ────────────────────────────────────────────────────────────────
+function openCertCard(cert,domain){
+  hideTooltip();
+  const tier=TIERS[cert.level-1];
+  document.getElementById('cc-ctx').textContent=`${domain.short} · ${tier.name}`;
+  const nameEl=document.getElementById('cc-name');
+  nameEl.style.color=domain.color;
+  nameEl.innerHTML=cert.name+(cert.red?'<span class="cc-badge">⚔ Offensive</span>':'');
+  document.getElementById('cc-full').textContent=cert.full;
+  document.getElementById('cc-cost').textContent=cert.cost;
+  document.getElementById('cc-scores').innerHTML=
+    `<span class="cc-sl">Training</span><span class="cc-sv">${pips(cert.sent.t)}</span>`+
+    `<span class="cc-sl">HR value</span><span class="cc-sv">${pips(cert.sent.e)}</span>`+
+    `<span class="cc-sl">Community</span><span class="cc-sv">${pips(cert.sent.c)}</span>`;
+  document.getElementById('cc-verdict').textContent=cert.verdict;
+  document.getElementById('cc-visit').onclick=()=>window.open(cert.url,'_blank');
+  document.getElementById('cert-card').classList.add('vis');
+  document.getElementById('cert-overlay').classList.add('vis');
+}
+function closeCertCard(){
+  document.getElementById('cert-card').classList.remove('vis');
+  document.getElementById('cert-overlay').classList.remove('vis');
+}
+document.getElementById('cc-close').addEventListener('click',closeCertCard);
+document.getElementById('cert-overlay').addEventListener('click',closeCertCard);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCertCard();});
+
+// ── BAR CHART ────────────────────────────────────────────────────────────────
+function renderBars(orgs){
+  const wrap=document.getElementById('bar-wrap');
+  wrap.innerHTML='';
+  const scale=document.createElement('div');scale.className='bar-scale';
+  [[5,'rgb(40,215,100)','Exceptional — lab-heavy, produces capable professionals'],
+   [4,'rgb(40,175,95)', 'Strong — high quality with a meaningful caveat'],
+   [3,'rgb(120,120,120)','Adequate — functional prep, limited skill transfer'],
+   [2,'rgb(175,90,40)', 'Weak — rarely produces capable practitioners'],
+   [1,'rgb(180,40,60)', 'Poor — memorization-focused or counterproductive'],
+  ].forEach(([n,col,label])=>{
+    const item=document.createElement('div');item.className='bar-scale-item';
+    item.innerHTML=`<div class="bar-circle" style="background:${col}">${n}</div>${label}`;
+    scale.appendChild(item);
+  });
+  wrap.appendChild(scale);
+
+  [...orgs].sort((a,b)=>b.scores.t-a.scores.t).forEach(org=>{
+    const col=ORG_COLORS[org.id]||'#888';
+    const row=document.createElement('div');row.className='bar-row';
+    const lbl=document.createElement('div');lbl.className='bar-label';lbl.style.color=col;lbl.textContent=org.name;
+    const track=document.createElement('div');track.className='bar-track';
+    const fill=document.createElement('div');fill.className='bar-fill';fill.style.background=col;fill.style.width='0';
+    const sc=document.createElement('div');sc.className='bar-score';sc.textContent=org.scores.t+'/5';
+    track.appendChild(fill);track.appendChild(sc);
+    const tags=document.createElement('div');tags.className='bar-tags';
+    org.domains.forEach(dk=>{
+      const dm=DOMAINS.find(d=>d.key===dk);if(!dm)return;
+      const tag=document.createElement('span');tag.className='bar-tag';
+      tag.style.cssText=`border:1px solid ${dm.color};color:${dm.color};`;tag.textContent=dm.short;
+      tags.appendChild(tag);
+    });
+    row.appendChild(lbl);row.appendChild(track);row.appendChild(tags);
+    row.addEventListener('mouseenter',e=>showOrgTip(e,org,'training'));
+    row.addEventListener('mousemove',moveTooltip);row.addEventListener('mouseleave',hideTooltip);
+    row.addEventListener('click',()=>window.open(org.url,'_blank'));
+    wrap.appendChild(row);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{fill.style.width=(org.scores.t/5*100)+'%';}));
+  });
+}
+
+// ── SCATTER ──────────────────────────────────────────────────────────────────
+function el(tag,attrs){
+  const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));return e;
+}
+function tx(text,attrs){
+  const e=document.createElementNS('http://www.w3.org/2000/svg','text');
+  Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));e.textContent=text;return e;
+}
+
+function renderScatter(orgs){
+  const sc=document.getElementById('scatter');sc.innerHTML='';
+  const leg=document.getElementById('scatter-legend');leg.innerHTML='';
+  const P={l:52,r:20,t:30,b:52};
+  const W=580,H=470,PW=W-P.l-P.r,PH=H-P.t-P.b;
+
+  [{x:P.l,y:P.t,w:PW/2,h:PH/2,lbl:'Underrated Gems',col:'rgba(40,180,80,.06)'},
+   {x:P.l+PW/2,y:P.t,w:PW/2,h:PH/2,lbl:'Universally Respected',col:'rgba(60,120,220,.06)'},
+   {x:P.l,y:P.t+PH/2,w:PW/2,h:PH/2,lbl:'Skip It',col:'rgba(180,30,50,.06)'},
+   {x:P.l+PW/2,y:P.t+PH/2,w:PW/2,h:PH/2,lbl:'HR Checkbox',col:'rgba(180,100,20,.06)'},
+  ].forEach(q=>{
+    sc.appendChild(el('rect',{x:q.x,y:q.y,width:q.w,height:q.h,fill:q.col}));
+    sc.appendChild(tx(q.lbl,{'text-anchor':'middle','dominant-baseline':'middle',
+      x:q.x+q.w/2,y:q.y+q.h/2,fill:'#2a2d40','font-size':'9.5','font-style':'italic',
+      'font-weight':'700','pointer-events':'none'}));
+  });
+  [1,2,3,4,5].forEach(v=>{
+    const xp=P.l+(v-1)/4*PW,yp=P.t+PH-(v-1)/4*PH;
+    sc.appendChild(el('line',{x1:xp,y1:P.t,x2:xp,y2:P.t+PH,stroke:'#1e2235','stroke-width':'.5','stroke-dasharray':'3 3'}));
+    sc.appendChild(tx(v,{x:xp,'text-anchor':'middle',y:P.t+PH+14,fill:'#8892b0','font-size':'9','font-weight':'700'}));
+    sc.appendChild(el('line',{x1:P.l,y1:yp,x2:P.l+PW,y2:yp,stroke:'#1e2235','stroke-width':'.5','stroke-dasharray':'3 3'}));
+    sc.appendChild(tx(v,{x:P.l-8,'text-anchor':'end','dominant-baseline':'middle',y:yp,fill:'#8892b0','font-size':'9','font-weight':'700'}));
+  });
+  sc.appendChild(el('line',{x1:P.l,y1:P.t,x2:P.l,y2:P.t+PH,stroke:'#3a3f5c','stroke-width':'1.5'}));
+  sc.appendChild(el('line',{x1:P.l,y1:P.t+PH,x2:P.l+PW,y2:P.t+PH,stroke:'#3a3f5c','stroke-width':'1.5'}));
+  sc.appendChild(el('line',{x1:P.l+PW/2,y1:P.t,x2:P.l+PW/2,y2:P.t+PH,stroke:'#2e3455','stroke-width':'1'}));
+  sc.appendChild(el('line',{x1:P.l,y1:P.t+PH/2,x2:P.l+PW,y2:P.t+PH/2,stroke:'#2e3455','stroke-width':'1'}));
+  sc.appendChild(tx('HR / Employer Sentiment →',{x:P.l+PW/2,'text-anchor':'middle',y:H-8,fill:'#8892b0','font-size':'9.5','font-weight':'700'}));
+  sc.appendChild(tx('Community Respect →',{x:12,'text-anchor':'middle','dominant-baseline':'middle',y:P.t+PH/2,fill:'#8892b0','font-size':'9.5','font-weight':'700',transform:`rotate(-90,12,${P.t+PH/2})`}));
+
+  const placed=[];
+  function nudge(cx,cy){
+    const offs=[[9,-9],[9,9],[-9,-9],[-9,9],[14,-5],[-14,-5],[14,5],[-14,5],[0,-16],[0,16],[18,0],[-18,0],[12,-14],[-12,-14],[12,14],[-12,14]];
+    for(const[ox,oy]of offs){
+      const lx=cx+ox,ly=cy+oy;
+      if(!placed.some(p=>Math.hypot(p.lx-lx,p.ly-ly)<20)){
+        placed.push({lx,ly});return[lx,ly,ox<0?'end':'start'];
+      }
+    }
+    const fb={lx:cx+9,ly:cy+12};placed.push(fb);return[fb.lx,fb.ly,'start'];
+  }
+
+  orgs.forEach(org=>{
+    const col=ORG_COLORS[org.id]||'#888';
+    const cx=P.l+(org.scores.e-1)/4*PW;
+    const cy=P.t+PH-(org.scores.c-1)/4*PH;
+    const[lx,ly,anchor]=nudge(cx,cy);
+    const dist=Math.hypot(lx-cx,ly-cy);
+    if(dist>10)sc.appendChild(el('line',{x1:cx,y1:cy,x2:lx+(anchor==='end'?5:-5),y2:ly,stroke:col,'stroke-width':'.6','stroke-opacity':'.45','pointer-events':'none'}));
+
+    const dotG=document.createElementNS('http://www.w3.org/2000/svg','g');
+    dotG.setAttribute('cursor','pointer');
+    dotG.appendChild(el('circle',{cx,cy,r:'5',fill:col,'fill-opacity':'.9',stroke:'#0a0c12','stroke-width':'1'}));
+    dotG.addEventListener('mouseenter',e=>showOrgTip(e,org,'scatter'));
+    dotG.addEventListener('mousemove',moveTooltip);dotG.addEventListener('mouseleave',hideTooltip);
+    dotG.addEventListener('click',()=>window.open(org.url,'_blank'));
+    sc.appendChild(dotG);
+
+    const labG=document.createElementNS('http://www.w3.org/2000/svg','g');
+    labG.setAttribute('cursor','pointer');
+    const aw=org.name.length*5.5+6;
+    labG.appendChild(el('rect',{x:anchor==='end'?lx-aw:lx-3,y:ly-9,width:aw,height:12,fill:'transparent',stroke:'none'}));
+    labG.appendChild(tx(org.name,{x:lx,y:ly,'text-anchor':anchor,fill:col,'font-size':'8','font-weight':'800'}));
+    labG.addEventListener('mouseenter',e=>showOrgTip(e,org,'scatter'));
+    labG.addEventListener('mousemove',moveTooltip);labG.addEventListener('mouseleave',hideTooltip);
+    labG.addEventListener('click',()=>window.open(org.url,'_blank'));
+    sc.appendChild(labG);
+
+    const s=document.createElement('span');
+    s.innerHTML=`<span class="sdot" style="background:${col}"></span>${org.name}`;
+    leg.appendChild(s);
+  });
+}
+
+// ── TOOLTIP ──────────────────────────────────────────────────────────────────
+const tt=document.getElementById('tooltip');
+function pips(n){
+  return[1,2,3,4,5].map(i=>`<span class="pip" style="background:${i<=n?scoreColor(n):'#2a2d40'}"></span>`).join('');
+}
+function showCertTip(e,cert,dom){
+  const tier=TIERS[cert.level-1];
+  tt.innerHTML=`<div class="tt-ctx">${dom.short} · ${tier.name} · ${tier.years}</div>`+
+    `<div class="tt-name">${cert.name}${cert.red?'<span style="display:inline-block;font-size:.52rem;font-weight:700;padding:1px 5px;border-radius:3px;background:#ff4466;color:#fff;margin-left:5px;">⚔ Offensive</span>':''}</div>`+
+    `<div class="tt-sub">${cert.full}</div><div class="tt-cost">${cert.cost}</div>`+
+    `<div class="tt-scores"><span class="tt-sl">Training</span><span class="tt-sv">${pips(cert.sent.t)}</span>`+
+    `<span class="tt-sl">HR</span><span class="tt-sv">${pips(cert.sent.e)}</span>`+
+    `<span class="tt-sl">Community</span><span class="tt-sv">${pips(cert.sent.c)}</span></div>`+
+    `<div class="tt-verdict">${cert.verdict}</div>`;
+  tt.classList.add('vis');moveTooltip(e);
+}
+function showOrgTip(e,org,axis){
+  const v=axis==='training'?org.vt:axis==='scatter'?org.vc:org.ve;
+  tt.innerHTML=`<div class="tt-ctx">Organization · ${axis==='training'?'Training Quality':'HR vs Community'}</div>`+
+    `<div class="tt-name">${org.full}</div>`+
+    `<div class="tt-scores"><span class="tt-sl">Training</span><span class="tt-sv">${pips(org.scores.t)}</span>`+
+    `<span class="tt-sl">HR</span><span class="tt-sv">${pips(org.scores.e)}</span>`+
+    `<span class="tt-sl">Community</span><span class="tt-sv">${pips(org.scores.c)}</span></div>`+
+    `<div class="tt-verdict">${v||''}</div>`;
+  tt.classList.add('vis');moveTooltip(e);
+}
+function moveTooltip(e){
+  tt.style.left=Math.min(e.clientX+14,window.innerWidth-310)+'px';
+  tt.style.top=Math.min(e.clientY-10,window.innerHeight-220)+'px';
+}
+function hideTooltip(){tt.classList.remove('vis');}
+
+// ── STATE + RENDER ────────────────────────────────────────────────────────────
+let currentTab='certs',activeFilter='all';
+
+const SKILL_LEGEND=[...TIERS].reverse().map(t=>
+  `<span><span class="sw" style="background:${t.color};height:4px;"></span><strong style="color:${t.color}">${t.name}</strong> — ${t.years}</span>`
+).join('');
+
+function showPanel(tab){
+  document.getElementById('wheel-wrap').style.display=tab==='certs'?'block':'none';
+  document.getElementById('bar-wrap').style.display=tab==='training'?'block':'none';
+  document.getElementById('scatter-wrap').style.display=tab==='scatter'?'flex':'none';
+  document.getElementById('domain-filters').style.display=tab==='certs'?'flex':'none';
+}
+
+function render(animate){
+  showPanel(currentTab);
+  const lb=document.getElementById('legend-bar');
+  const fn=document.getElementById('footnote');
+  if(currentTab==='certs'){
+    lb.innerHTML=SKILL_LEGEND;
+    fn.textContent='Third-party/vendor-neutral certs only. ⚔ = offensive. Center = rarest. Outer = foundational. Click any cert to see details and visit site.';
+    const go=()=>{
+      const list=activeFilter==='all'?CERTS:CERTS.filter(c=>c.domain===activeFilter);
+      placeCerts(list);
+      document.querySelectorAll('.domain-bg').forEach(el2=>{
+        el2.style.opacity=activeFilter==='all'?'1':el2.classList.contains('domain-bg-'+activeFilter)?'1':'0.2';
+      });
+    };
+    if(animate){svg.querySelectorAll('.cert-node').forEach(n=>{n.style.opacity='0';});setTimeout(go,300);}
+    else go();
+  } else if(currentTab==='training'){
+    lb.innerHTML='';fn.textContent='Organizations ranked by training quality. Hover for full assessment. Click to visit.';
+    renderBars(ORGS);
+  } else {
+    lb.innerHTML='';fn.textContent='X = HR sentiment · Y = community respect · Top-left = underrated · Bottom-right = HR checkbox. Hover labels or dots for details.';
+    renderScatter(ORGS);
+  }
+}
+
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    currentTab=btn.dataset.tab;
+    document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b===btn));
+    render(true);
+  });
+});
+document.getElementById('domain-filters').addEventListener('click',e=>{
+  const btn=e.target.closest('.dfbtn');if(!btn)return;
+  activeFilter=btn.dataset.domain;
+  document.querySelectorAll('.dfbtn').forEach(b=>b.classList.toggle('active',b===btn));
+  render(true);
+});
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+buildWheel();
+render(false);
+</script>
+</body>
+</html>
