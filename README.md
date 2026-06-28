@@ -2,7 +2,7 @@
 
 An interactive, opinionated visualization of the cybersecurity certification landscape — built for practitioners who want signal, not noise.
 
-**Live demo:** open `Best.html` directly in any modern browser. No server, no dependencies, no install.
+**Live demo:** open `Roadmap.html` directly in any modern browser. No server, no dependencies, no install.
 
 ---
 
@@ -92,7 +92,7 @@ What makes this approach different:
 
 | File | Description |
 |------|-------------|
-| `Best.html` | The complete interactive tool — single file, no dependencies |
+| `Roadmap.html` | The complete interactive tool — single file, no dependencies |
 | `README.md` | This file |
 | `LICENSE` | MIT License |
 
@@ -101,7 +101,7 @@ What makes this approach different:
 ## Usage
 
 1. Clone or download the repo
-2. Open `Best.html` in a browser
+2. Open `Roadmap.html` in a browser
 3. Use the tabs to switch between Certifications, Training Quality, and HR vs. Community views
 4. Use domain filters to focus on a specific area
 5. Hover any node for detail; click to open the certification's official page
